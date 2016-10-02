@@ -1,3 +1,5 @@
 # exclude everything except directory foo/bar
-    /build/*
-    /build
+/build/*
+/build
+/www/public
+/www/public/*
