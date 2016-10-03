@@ -16,9 +16,16 @@ import IconButtonDown from 'material-ui/svg-icons/hardware/keyboard-arrow-down';
 import baseTheme from 'material-ui/styles/baseThemes/lightBaseTheme';
 import getMuiTheme from 'material-ui/styles/getMuiTheme'
 import RaisedButton from 'material-ui/RaisedButton';
+import TextField from 'material-ui/TextField';
+import Slider from 'material-ui/Slider';
 
 
 var idOfSetTimeout = -1;
+
+const DEF_AD_WIDTH = 250;
+const DEF_AD_HEIGHT = 300;
+const DEF_COUPON_CODE = "{COUPON}";
+const DEF_URL_FOR_LINK = "{CLICK_URL}";
 
 class App extends Component {
 
@@ -37,12 +44,10 @@ class App extends Component {
             touchAreaTop: "0",
             touchAreaBottom: "70",
             touchAreaBackgroundColor: "transparent",
-            adcontent: ""
+            adcontent: "",
+            urlForLink: DEF_URL_FOR_LINK,
+            couponCode: DEF_COUPON_CODE
         };
-    }
-
-    getBase64Image(img) {
-
     }
 
     onDrop(files) {
@@ -122,8 +127,8 @@ class App extends Component {
                 } else if (action == "down") {
                     let pos = this.state.touchAreaTop;
                     pos = parseInt(pos) + 1;
-                    if (pos > 250) {
-                        pos = 250;
+                    if (pos > DEF_AD_WIDTH) {
+                        pos = DEF_AD_WIDTH;
                     }
                     console.log("move touch area top: ", pos);
                     this.setState({
@@ -154,22 +159,134 @@ class App extends Component {
                 break;
         }
 
-        console.log("set Color");
+        this.showTouchAreaTemporarily();
+    }
+
+    showTouchAreaTemporarily() {
+        console.log(">> showTouchAreaTemporarily");
         this.setState({
             touchAreaBackgroundColor: "rgba(255,0,0,0.2)"
         });
+
         clearTimeout(idOfSetTimeout);
         idOfSetTimeout = setTimeout(() => {
             this.setState({
                 touchAreaBackgroundColor: "transparent"
             });
         }, 2000);
+    }
 
+    promptInnerHtmlOutput() {
+        // Splash Result
+        this.setState({backgroundForResult: "yellow"});
+        setTimeout(() => {
+            this.setState({backgroundForResult: "white"});
+            setTimeout(() => {
+                this.setState({backgroundForResult: "yellow"});
+                setTimeout(() => {
+                    this.setState({backgroundForResult: "white"});
+                }, 500);
+            }, 500);
+        }, 500);
+    }
+
+    onCodePosSliderChange(event, value) {
+        console.log(">> onCodePosSliderChange:", value, value*(DEF_AD_WIDTH*100/100));
+        this.setState({
+            codePosUp: parseInt(value*(DEF_AD_WIDTH*100/100))
+        });
+    }
+
+    onLinkPosTopSliderChange(event, value) {
+        console.log(">> onLinkPosTopSliderChange:", value, value*(DEF_AD_HEIGHT*100/100));
+        this.setState({
+            touchAreaTop: parseInt(value*(DEF_AD_HEIGHT*100/100))
+        });
+        this.showTouchAreaTemporarily();
+    }
+
+    onLinkPosBottomSliderChange(event, value) {
+        console.log(">> onLinkPosBottomSliderChange:", value, value*(DEF_AD_HEIGHT*100/100));
+        this.setState({
+            touchAreaBottom: parseInt(value*(DEF_AD_HEIGHT*100/100))
+        });
+        this.showTouchAreaTemporarily();
     }
 
     buildAdContent() {
         console.log(">> buildAdContent");
         document.getElementById("output_web_ad").value = document.getElementById("container").innerHTML;
+
+        this.copyToClipboard(document.getElementById("output_web_ad"));
+    }
+
+    copyToClipboard(elem) {
+    	  // create hidden text element, if it doesn't already exist
+        var targetId = "_hiddenCopyText_";
+        var isInput = elem.tagName === "INPUT" || elem.tagName === "TEXTAREA";
+        var origSelectionStart, origSelectionEnd;
+        if (isInput) {
+            // can just use the original source element for the selection and copy
+            target = elem;
+            origSelectionStart = elem.selectionStart;
+            origSelectionEnd = elem.selectionEnd;
+        } else {
+            // must use a temporary form element for the selection and copy
+            target = document.getElementById(targetId);
+            if (!target) {
+                var target = document.createElement("textarea");
+                target.style.position = "absolute";
+                target.style.left = "-9999px";
+                target.style.top = "0";
+                target.id = targetId;
+                document.body.appendChild(target);
+            }
+            target.textContent = elem.textContent;
+        }
+        // select the content
+        var currentFocus = document.activeElement;
+        target.focus();
+        target.setSelectionRange(0, target.value.length);
+
+        // copy the selection
+        var succeed;
+        try {
+        	  succeed = document.execCommand("copy");
+        } catch(e) {
+            succeed = false;
+        }
+        // restore original focus
+        if (currentFocus && typeof currentFocus.focus === "function") {
+            currentFocus.focus();
+        }
+
+        if (isInput) {
+            // restore prior selection
+            elem.setSelectionRange(origSelectionStart, origSelectionEnd);
+        } else {
+            // clear temporary content
+            target.textContent = "";
+        }
+        return succeed;
+    }
+
+    onCouponCodeTextChange(e) {
+        this.setState({
+            couponCode: e.target.value
+        });
+    }
+
+    onLinkUrlChange(e) {
+        this.setState({
+            urlForLink: e.target.value
+        });
+    }
+
+    resetPlaceholder() {
+        this.setState({
+            urlForLink: DEF_URL_FOR_LINK,
+            couponCode: DEF_COUPON_CODE
+        });
     }
 
     render() {
@@ -180,51 +297,99 @@ class App extends Component {
           <div className="App">
             <AppBar titleStyle={{fontSize: "2rem"}} style={{ backgroundColor: "rgb(23,53,102)"}} ref="appbar" title="Web AD Designer" />
             <p className="App-intro">
-              To get started, edit <code>src/App.js</code> and save to reload.
+              Here is a tool to get web content for AD
             </p>
 
             <div style={{display: "flex"}}>
               <div>
+                <h4>1. Provide an image</h4>
                 <Dropzone onDrop={this.onDrop}>
                   <p style={{textAlign: "center", marginTop: "90px"}}>Drop Image Here</p>
                 </Dropzone>
               </div>
+              <div>
+              <h4>2. Preview</h4>
               <div style={{marginLeft: "10px", marginRight: "10px", width: "300px", height: "250px", textAlign: "center", border: "1px solid gray"}}>
                 <div id="container" style={{ margin:"0px"}}>
                     <div style={{position: "relative"}}>
                         <img id="ad_image" ref="ad_image" style={{width:"300px",height:"250px"}} />
                         <div id="code_container" style={{left: "0px", width: "100%",marginLeft: "auto",display: "inline-block",position: "absolute",top: this.state.codePosUp + "px",marginRight: "auto"}}>
                             <p id="code_string" style={{fontWeight:"bold",textAlign:"center",fontSize:"1rem"}}>
-                              {this.coupon}
+                              {this.state.couponCode}
                             </p>
                         </div>
-                        <a id="link" href="{CLICK_URL}" style={{backgroundColor: this.state.touchAreaBackgroundColor, left: "0px", width: "300px",top: this.state.touchAreaTop + "px", bottom: this.state.touchAreaBottom + "px", position: "absolute"}}>
+                        <a id="link" href={this.state.urlForLink} style={{backgroundColor: this.state.touchAreaBackgroundColor, left: "0px", width: "300px",top: this.state.touchAreaTop + "px", bottom: this.state.touchAreaBottom + "px", position: "absolute"}}>
                         </a>
                     </div>
                 </div>
               </div>
+              </div>
               <div id="controlling_area">
-                <p>Adjust the position of coupon code</p>
-                <div style={{display:"flex", flexDirection:"column"}}>
-                    <IconButton onTouchTap={this.onChangeCouponCodePos.bind(this,  "up")}><IconButtonUp /></IconButton>
-                    <IconButton onTouchTap={this.onChangeCouponCodePos.bind(this, "down")}><IconButtonDown /></IconButton>
+                <h4>3. Fine-tune positions</h4>
+                <div style={{display: "flex"}}>
+                    <div style={{display:"flex", flexDirection:"column"}}>
+                        <IconButton onTouchTap={this.onChangeCouponCodePos.bind(this,  "up")}><IconButtonUp /></IconButton>
+                        <IconButton onTouchTap={this.onChangeCouponCodePos.bind(this, "down")}><IconButtonDown /></IconButton>
+                    </div>
+                    <div>
+                        <TextField
+                            value={this.state.codePosUp}
+                          hintText="Hint Text"
+                          floatingLabelText="Position of coupon code. (px)"
+                          disabled={true} />
+                          <Slider value={this.state.codePosUp/DEF_AD_WIDTH}
+                            onChange={this.onCodePosSliderChange.bind(this)}/>
+                    </div>
                 </div>
-                <p>Adjust the top position of touch area</p>
-                <div style={{display:"flex", flexDirection:"column"}}>
-                    <IconButton onTouchTap={this.onChangeTouchAreaPos.bind(this,  "top", "up")}><IconButtonUp /></IconButton>
-                    <IconButton onTouchTap={this.onChangeTouchAreaPos.bind(this, "top", "down")}><IconButtonDown /></IconButton>
-
+                <div style={{display: "flex"}}>
+                    <div style={{display:"flex", flexDirection:"column"}}>
+                        <IconButton onTouchTap={this.onChangeTouchAreaPos.bind(this,  "top", "up")}><IconButtonUp /></IconButton>
+                        <IconButton onTouchTap={this.onChangeTouchAreaPos.bind(this, "top", "down")}><IconButtonDown /></IconButton>
+                    </div>
+                    <div>
+                        <TextField
+                            value={this.state.touchAreaTop}
+                          floatingLabelText="Top position for link. (px)"
+                          disabled={true} />
+                          <Slider value={this.state.touchAreaTop/DEF_AD_HEIGHT}
+                            onChange={this.onLinkPosTopSliderChange.bind(this)}/>
+                    </div>
                 </div>
 
-                <p>Adjust the bottom position of touch area</p>
-                <div style={{display:"flex", flexDirection:"column"}}>
-                  <IconButton onTouchTap={this.onChangeTouchAreaPos.bind(this, "bottom", "up")}><IconButtonUp /></IconButton>
-                  <IconButton onTouchTap={this.onChangeTouchAreaPos.bind(this, "bottom", "down")}><IconButtonDown /></IconButton>
+                <div style={{display: "flex"}}>
+                    <div style={{display:"flex", flexDirection:"column"}}>
+                      <IconButton onTouchTap={this.onChangeTouchAreaPos.bind(this, "bottom", "up")}><IconButtonUp /></IconButton>
+                      <IconButton onTouchTap={this.onChangeTouchAreaPos.bind(this, "bottom", "down")}><IconButtonDown /></IconButton>
+                    </div>
+                    <div>
+                        <TextField
+                            value={this.state.touchAreaBottom}
+                          floatingLabelText="Bottom position for link. (px)"
+                          disabled={true} />
+                          <Slider value={this.state.touchAreaBottom/DEF_AD_HEIGHT}
+                            onChange={this.onLinkPosBottomSliderChange.bind(this)}/>
+                    </div>
                 </div>
+              </div>
+              <div style={{marginLeft: "30px"}}>
+                  <div style={{display:"flex", flexDirection:"column"}}>
+                      <h3>Optional:</h3>
+                      <TextField
+                          value={this.state.couponCode}
+                        floatingLabelText="Placeholder for coupon"
+                        onChange={this.onCouponCodeTextChange.bind(this)}
+                        />
 
+                      <TextField
+                        value={this.state.urlForLink}
+                      floatingLabelText="URL for link"
+                      onChange={this.onLinkUrlChange.bind(this)}
+                      />
+                      <RaisedButton style={{marginTop: "20px"}} onTouchTap={this.resetPlaceholder.bind(this)} label="reset"/>
+                  </div>
               </div>
             </div>
-            <RaisedButton onTouchTap={this.buildAdContent.bind(this)} label="Get content of web AD"/>
+            <RaisedButton primary={true} onTouchTap={this.buildAdContent.bind(this)} label="Get content of web AD"/>
             <div style={{width: "100%", minHeight: "50px"}}>
               <textarea id="output_web_ad" style={{width: "90%", minHeight: "50px"}} value={this.state.adcontent}/>
             </div>
