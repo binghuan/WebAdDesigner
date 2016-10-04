@@ -176,20 +176,6 @@ class App extends Component {
         }, 2000);
     }
 
-    promptInnerHtmlOutput() {
-        // Splash Result
-        this.setState({backgroundForResult: "yellow"});
-        setTimeout(() => {
-            this.setState({backgroundForResult: "white"});
-            setTimeout(() => {
-                this.setState({backgroundForResult: "yellow"});
-                setTimeout(() => {
-                    this.setState({backgroundForResult: "white"});
-                }, 500);
-            }, 500);
-        }, 500);
-    }
-
     onCodePosSliderChange(event, value) {
         console.log(">> onCodePosSliderChange:", value, value*(DEF_AD_WIDTH*100/100));
         this.setState({
@@ -213,11 +199,18 @@ class App extends Component {
         this.showTouchAreaTemporarily();
     }
 
+    splashOutput() {
+
+    }
+
     buildAdContent() {
         console.log(">> buildAdContent");
-        document.getElementById("output_web_ad").value = document.getElementById("container").innerHTML;
-
         this.copyToClipboard(document.getElementById("output_web_ad"));
+        this.setState({backgroundForResult: "yellow"});
+        setTimeout(() => {
+            this.setState({backgroundForResult: "white"});
+            document.getElementById("output_web_ad").value = document.getElementById("container").innerHTML;
+        }, 500);
     }
 
     copyToClipboard(elem) {
@@ -391,7 +384,7 @@ class App extends Component {
             </div>
             <RaisedButton primary={true} onTouchTap={this.buildAdContent.bind(this)} label="Get content of web AD"/>
             <div style={{width: "100%", minHeight: "50px"}}>
-              <textarea id="output_web_ad" style={{width: "90%", minHeight: "50px"}} value={this.state.adcontent}/>
+              <textarea id="output_web_ad" style={{width: "90%", minHeight: "50px", backgroundColor: this.state.backgroundForResult}} value={this.state.adcontent}/>
             </div>
 
           </div>
