@@ -4,5 +4,5 @@
 
 ##Video for demo. <br/>
 <a href="https://youtu.be/rzTtNR6qgmg" target="_blank">
-        <img src="./public/images/demo_for_web_ad_designer.gif">
+        <img src="./public/images/demo.png">
 </a>
